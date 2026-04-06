@@ -17,6 +17,10 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 ## MATLAB Orbitals (Grades 10-12)
 **File:** `   `
 
+1. Download file
+2. Open MATLAB
+3. Demonstrate how to open a file in MATLAB  **Can you open MATLAB files from downloads on CAEN comp?**
+
 Download the file _____ to the DOWNLOADS folder on your computer. Then open your Downloads folder and double-click on the file to open MATLAB.    **Check that these instructions work!!**  
 
 ---
