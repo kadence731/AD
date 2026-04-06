@@ -17,7 +17,7 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 ## MATLAB Orbitals (Grades 10-12)
 **File:** `   `
 
-** Brief description **
+Download the file _____ to the DOWNLOADS folder on your computer. Then open your Downloads folder and double-click on the file to open MATLAB.    **Check that these instructions work!!**  
 
 ---
 
