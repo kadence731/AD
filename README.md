@@ -10,7 +10,7 @@ A live-calculation tool where students design a spacecraft mission to the Moon, 
 
 Includes three built-in challenge tasks: Essential / Advanced / Expert.
 
-Copy this link to access the activity:    https://kadence731/AD/mission-design.html
+Copy this link to access the activity:    https://kadence731.github.io/AD/mission-design.html
 
 ---
 
