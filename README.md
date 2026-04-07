@@ -4,7 +4,6 @@ Please follow the instructions below to access your activity for today.
 
 
 ## Mission Design Challenge (Grades 6-9)
-**File:** `mission-design.html`
 
 A live-calculation tool where students design a spacecraft mission to the Moon, Mars, Europa, or Titan. All results update instantly as sliders change.
 
@@ -15,7 +14,6 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 ---
 
 ## MATLAB Orbitals (Grades 10-12)
-**File:** `   `
 
 1. Download file
 2. Open MATLAB
