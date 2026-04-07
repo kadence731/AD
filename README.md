@@ -15,7 +15,8 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 
 ## MATLAB Orbitals (Grades 10-12)
 
- - Download the file 'elliptical_orbits.m' to the DOWNLOADS folder on your computer. Then open your Downloads folder and double-click on the file to open MATLAB.
+ - Download the file 'elliptical_orbits.m' to the DOWNLOADS folder on your computer.
+ - Then open your Downloads folder and double-click on the file to open MATLAB.
 
 ---
 
