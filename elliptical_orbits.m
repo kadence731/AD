@@ -4,7 +4,7 @@ M_Moon = 7.35e22; % kg
 RadiusMoon = 1737.4e3;
 R_periapsis = 2000e3; % m
 e_list = [0.25, 0.5, 0.75];
-miu = G*M_Moon; % gravitational parameter
+miu = G * M_Moon; % gravitational parameter
 
 % Part 1 -> Semi-major, Apoapsis distance, Orbital eneregy, Orbital period
 results = [];
