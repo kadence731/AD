@@ -2,6 +2,7 @@
 
 Please follow the instructions below to access your activity for today. 
 
+---
 
 ## Mission Design Challenge (Grades 6-9)
 
