@@ -16,7 +16,7 @@ Click or copy this link to access the activity:    'https://kadence731.github.io
 
  - Download the 3 files ending in '.m' to the DOWNLOADS folder on your computer.
     -  'orbit_speed_explorer.m'
-    -  ''
+    -  "l"
     -  ''
  - Then open your Downloads folder and double-click on a file to open MATLAB.
 
