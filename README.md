@@ -8,7 +8,7 @@ Please follow the instructions below to access your activity for today.
 
 A live-calculation tool where students try to escape planets like Earth and Jupiter by adjusting launch variables.
 
-Click or copy this link to access the activity:    `https://kadence731.github.io/AD/escapeV_mission_design.html`
+Click or copy this link to access the activity:    https://kadence731.github.io/AD/escapeV_mission_design.html
 
 ---
 
