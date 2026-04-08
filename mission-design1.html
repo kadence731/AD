@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Escape Mission Designer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 18px 40px rgba(0,0,0,0.28);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.14), transparent 28%),
+        linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3rem);
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-inner {
+      padding: 22px;
+    }
+
+    .world-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 20px;
+    }
+
+    .world-title h2 {
+      margin: 0;
+      font-size: 1.9rem;
+    }
+
+    .world-title .subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+      text-transform: lowercase;
+    }
+
+    select, button, input[type="range"] {
+      width: 100%;
+    }
+
+    select {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      margin: 0 0 14px;
+      color: #f8fafc;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .control-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .control-label {
+      font-weight: 600;
+    }
+
+    .control-value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .cta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #08111f;
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .result-box {
+      display: grid;
+      gap: 14px;
+    }
+
+    .launch-card {
+      background: linear-gradient(180deg, rgba(56,189,248,0.08), rgba(129,140,248,0.06));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .launch-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      margin: 8px 0 12px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .status.good { color: #86efac; }
+    .status.bad { color: #fca5a5; }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .mini {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .mini .k {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .mini .v {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .info-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .info-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .info-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .formula {
+      margin-top: 10px;
+      font-family: "SFMono-Regular", Consolas, Monaco, monospace;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      .world-head { flex-direction: column; }
+      .cta, .mini-stats, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>Escape Mission Designer</h1>
+      <p>Adjust payload, propellant, and engine performance to see whether your rocket can escape.</p>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-inner">
+          <div class="world-head">
+            <div class="world-title">
+              <h2 id="worldName">Earth</h2>
+              <div class="subtitle" id="worldType">terrestrial planet</div>
+            </div>
+            <div style="min-width: 220px; width: 240px;">
+              <select id="worldSelect"></select>
+            </div>
+          </div>
+
+          <h3 class="section-title">World Data</h3>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Mass</div>
+              <div class="stat-value" id="massStat">— kg</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Radius</div>
+              <div class="stat-value" id="radiusStat">— km</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Escape Velocity</div>
+              <div class="stat-value" id="escapeStat">— km/s</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Surface Gravity</div>
+              <div class="stat-value" id="gravityStat">— m/s²</div>
+            </div>
+          </div>
+
+          <h3 class="section-title">Rocket Settings</h3>
+          <div class="controls">
+            <div class="control">
+              <div class="control-top">
+                <div class="control-label">Payload Mass</div>
+                <div class="control-value" id="payloadValue">4.0 t</div>
+              </div>
+              <input id="payloadSlider" type="range" min="1" max="20" step="0.5" value="4" />
+            </div>
+
+            <div class="control">
+              <div class="control-top">
+                <div class="control-label">Propellant Mass</div>
+                <div class="control-value" id="propellantValue">24.0 t</div>
+              </div>
+              <input id="propellantSlider" type="range" min="2" max="120" step="1" value="24" />
+            </div>
+
+            <div class="control">
+              <div class="control-top">
+                <div class="control-label">Engine Specific Impulse</div>
+                <div class="control-value" id="ispValue">320 s</div>
+              </div>
+              <input id="ispSlider" type="range" min="180" max="480" step="5" value="320" />
+            </div>
+
+            <div class="control">
+              <div class="control-top">
+                <div class="control-label">Dry Structure Mass</div>
+                <div class="control-value" id="dryValue">6.0 t</div>
+              </div>
+              <input id="drySlider" type="range" min="2" max="25" step="0.5" value="6" />
+            </div>
+          </div>
+
+          <div class="cta">
+            <button class="primary" id="simulateBtn">Simulate Launch</button>
+            <button class="secondary" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-inner result-box">
+          <div class="launch-card">
+            <div class="launch-title">Mission Result</div>
+            <div id="statusBadge" class="status bad">Set your rocket and simulate.</div>
+            <div id="resultText" style="color: var(--muted); line-height: 1.55;">
+              Your rocket needs enough delta-v to beat the selected world's escape velocity.
+            </div>
+
+            <div class="mini-stats">
+              <div class="mini">
+                <div class="k">Available delta-v</div>
+                <div class="v" id="deltaVStat">— km/s</div>
+              </div>
+              <div class="mini">
+                <div class="k">Mass ratio</div>
+                <div class="v" id="massRatioStat">—</div>
+              </div>
+              <div class="mini">
+                <div class="k">Escape margin</div>
+                <div class="v" id="marginStat">— km/s</div>
+              </div>
+              <div class="mini">
+                <div class="k">Recommended tweak</div>
+                <div class="v" id="tweakStat">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>Did You Know</h3>
+            <p id="didYouKnow">Different worlds need very different rocket performance. A design that can leave the Moon might fail on Earth.</p>
+          </div>
+
+          <div class="info-card">
+            <h3>Something to Try</h3>
+            <p id="tryPrompt">Start on the Moon, then switch to Earth without changing your rocket. What happens?</p>
+          </div>
+
+          <div class="info-card">
+            <h3>How the sim estimates performance</h3>
+            <p>The rocket's ideal delta-v is estimated from payload, dry mass, propellant, and specific impulse.</p>
+            <div class="formula">Δv = Isp × g₀ × ln(m₀ / m₁)</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const worlds = {
+      earth: {
+        name: 'Earth', type: 'terrestrial planet', mass: 5.97e24, radius: 6371, escapeVelocity: 11.2, gravity: 9.81,
+        fact: 'Earth is hard to leave because it combines a lot of mass with a relatively compact size.',
+        prompt: 'Try to build the lightest rocket that can still escape Earth.'
+      },
+      moon: {
+        name: 'Moon', type: 'natural satellite', mass: 7.35e22, radius: 1737, escapeVelocity: 2.38, gravity: 1.62,
+        fact: 'The Moon has much weaker gravity than Earth, so rockets need far less speed to escape.',
+        prompt: 'Use the same rocket on the Moon and Earth. Which one succeeds?'
+      },
+      mars: {
+        name: 'Mars', type: 'terrestrial planet', mass: 6.42e23, radius: 3389, escapeVelocity: 5.03, gravity: 3.71,
+        fact: 'Mars needs more launch speed than the Moon, but much less than Earth.',
+        prompt: 'Can you make a rocket that escapes Mars with less than 20 tons of propellant?'
+      },
+      europa: {
+        name: 'Europa', type: 'icy moon', mass: 4.8e22, radius: 1561, escapeVelocity: 2.03, gravity: 1.31,
+        fact: 'Europa is one of Jupiter\'s moons, and its own escape speed is low compared with planets.',
+        prompt: 'Design a very small rocket and see how little propellant you can get away with.'
+      },
+      titan: {
+        name: 'Titan', type: 'moon with thick atmosphere', mass: 1.35e23, radius: 2575, escapeVelocity: 2.64, gravity: 1.35,
+        fact: 'Titan has low gravity, but in real life its thick atmosphere would also matter for launches.',
+        prompt: 'How does Titan compare with the Moon even though their gravities are somewhat similar?'
+      },
+      jupiter: {
+        name: 'Jupiter', type: 'gas giant', mass: 1.90e27, radius: 69911, escapeVelocity: 59.5, gravity: 24.79,
+        fact: 'Jupiter is so massive that escaping directly takes far more energy than from rocky planets.',
+        prompt: 'See whether any slider combination in this range can escape Jupiter.'
+      }
+    };
+
+    const defaults = { world: 'earth', payload: 4, propellant: 24, isp: 320, dry: 6 };
+    const g0 = 9.81;
+
+    const el = {
+      worldSelect: document.getElementById('worldSelect'),
+      worldName: document.getElementById('worldName'),
+      worldType: document.getElementById('worldType'),
+      massStat: document.getElementById('massStat'),
+      radiusStat: document.getElementById('radiusStat'),
+      escapeStat: document.getElementById('escapeStat'),
+      gravityStat: document.getElementById('gravityStat'),
+      payloadSlider: document.getElementById('payloadSlider'),
+      propellantSlider: document.getElementById('propellantSlider'),
+      ispSlider: document.getElementById('ispSlider'),
+      drySlider: document.getElementById('drySlider'),
+      payloadValue: document.getElementById('payloadValue'),
+      propellantValue: document.getElementById('propellantValue'),
+      ispValue: document.getElementById('ispValue'),
+      dryValue: document.getElementById('dryValue'),
+      simulateBtn: document.getElementById('simulateBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      statusBadge: document.getElementById('statusBadge'),
+      resultText: document.getElementById('resultText'),
+      deltaVStat: document.getElementById('deltaVStat'),
+      massRatioStat: document.getElementById('massRatioStat'),
+      marginStat: document.getElementById('marginStat'),
+      tweakStat: document.getElementById('tweakStat'),
+      didYouKnow: document.getElementById('didYouKnow'),
+      tryPrompt: document.getElementById('tryPrompt')
+    };
+
+    function sci(value) {
+      return value.toExponential(2);
+    }
+
+    function formatTons(v) {
+      return `${Number(v).toFixed(1)} t`;
+    }
+
+    function populateWorlds() {
+      Object.entries(worlds).forEach(([key, world]) => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = world.name;
+        el.worldSelect.appendChild(opt);
+      });
+      el.worldSelect.value = defaults.world;
+    }
+
+    function updateWorldCard() {
+      const world = worlds[el.worldSelect.value];
+      el.worldName.textContent = world.name;
+      el.worldType.textContent = world.type;
+      el.massStat.textContent = `${sci(world.mass)} kg`;
+      el.radiusStat.textContent = `${world.radius.toLocaleString()} km`;
+      el.escapeStat.textContent = `${world.escapeVelocity.toFixed(2)} km/s`;
+      el.gravityStat.textContent = `${world.gravity.toFixed(2)} m/s²`;
+      el.didYouKnow.textContent = world.fact;
+      el.tryPrompt.textContent = world.prompt;
+    }
+
+    function updateSliderLabels() {
+      el.payloadValue.textContent = formatTons(el.payloadSlider.value);
+      el.propellantValue.textContent = formatTons(el.propellantSlider.value);
+      el.ispValue.textContent = `${el.ispSlider.value} s`;
+      el.dryValue.textContent = formatTons(el.drySlider.value);
+    }
+
+    function simulate() {
+      const world = worlds[el.worldSelect.value];
+      const payload = Number(el.payloadSlider.value) * 1000;
+      const propellant = Number(el.propellantSlider.value) * 1000;
+      const dry = Number(el.drySlider.value) * 1000;
+      const isp = Number(el.ispSlider.value);
+
+      const m0 = payload + dry + propellant;
+      const m1 = payload + dry;
+      const massRatio = m0 / m1;
+      const deltaV = isp * g0 * Math.log(massRatio) / 1000;
+      const margin = deltaV - world.escapeVelocity;
+      const success = margin >= 0;
+
+      el.deltaVStat.textContent = `${deltaV.toFixed(2)} km/s`;
+      el.massRatioStat.textContent = `${massRatio.toFixed(2)} : 1`;
+      el.marginStat.textContent = `${margin >= 0 ? '+' : ''}${margin.toFixed(2)} km/s`;
+
+      if (success) {
+        el.statusBadge.className = 'status good';
+        el.statusBadge.textContent = 'Success: your rocket escapes.';
+        el.resultText.textContent = `This design beats ${world.name}'s escape velocity. Your estimated delta-v is ${deltaV.toFixed(2)} km/s, which clears the target by ${margin.toFixed(2)} km/s.`;
+        el.tweakStat.textContent = 'Try less propellant';
+      } else {
+        el.statusBadge.className = 'status bad';
+        el.statusBadge.textContent = 'Not enough speed to escape.';
+        el.resultText.textContent = `This rocket falls short on ${world.name}. It needs about ${Math.abs(margin).toFixed(2)} km/s more ideal delta-v to escape.`;
+
+        const ratioPayload = payload / m0;
+        if (ratioPayload > 0.24) {
+          el.tweakStat.textContent = 'Lower payload';
+        } else if (isp < 380) {
+          el.tweakStat.textContent = 'Raise Isp';
+        } else {
+          el.tweakStat.textContent = 'Add propellant';
+        }
+      }
+    }
+
+    function reset() {
+      el.worldSelect.value = defaults.world;
+      el.payloadSlider.value = defaults.payload;
+      el.propellantSlider.value = defaults.propellant;
+      el.ispSlider.value = defaults.isp;
+      el.drySlider.value = defaults.dry;
+      updateWorldCard();
+      updateSliderLabels();
+      el.statusBadge.className = 'status bad';
+      el.statusBadge.textContent = 'Set your rocket and simulate.';
+      el.resultText.textContent = 'Your rocket needs enough delta-v to beat the selected world\'s escape velocity.';
+      el.deltaVStat.textContent = '— km/s';
+      el.massRatioStat.textContent = '—';
+      el.marginStat.textContent = '— km/s';
+      el.tweakStat.textContent = '—';
+    }
+
+    populateWorlds();
+    updateWorldCard();
+    updateSliderLabels();
+
+    [el.payloadSlider, el.propellantSlider, el.ispSlider, el.drySlider].forEach(slider => {
+      slider.addEventListener('input', updateSliderLabels);
+    });
+
+    el.worldSelect.addEventListener('change', () => {
+      updateWorldCard();
+    });
+
+    el.simulateBtn.addEventListener('click', simulate);
+    el.resetBtn.addEventListener('click', reset);
+  </script>
+</body>
+</html>
