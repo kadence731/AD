@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape Velocity Explorer — Mission Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07080f;
+  --bg2: #0d0f1a;
+  --bg3: #12152a;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.15);
+  --text: #e8eaf6;
+  --muted: #7b80a8;
+  --accent: #4fc3f7;
+  --accent2: #ff7043;
+  --success: #69f0ae;
+  --warn: #ffd740;
+  --danger: #ff5252;
+  --mono: 'Space Mono', monospace;
+  --display: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--display);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+  z-index: 10;
+}
+header h1 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.header-sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+header .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+.app {
+  display: grid;
+  grid-template-columns: 260px 1fr 360px;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+  overflow-y: auto;
+  padding: 0.75rem 0;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+.cat-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.9rem 1rem 0.35rem;
+}
+.cat-label:not(:first-child) { border-top: 1px solid var(--border); margin-top: 0.5rem; }
+
+.world-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+.world-btn:hover { background: rgba(255,255,255,0.04); }
+.world-btn.active { background: rgba(79,195,247,0.08); border-right: 2px solid var(--accent); }
+
+.world-icon {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.world-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+}
+.world-esc {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  display: block;
+}
+.world-btn.active .world-name { color: var(--accent); }
+
+.canvas-area {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+#space-canvas { display: block; width: 100%; height: 100%; }
+
+.world-label-overlay {
+  position: absolute;
+  top: 1.2rem; left: 1.5rem;
+  pointer-events: none;
+}
+.world-label-overlay .wl-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.world-label-overlay .wl-type {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.info-panel {
+  border-left: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 1.1rem;
+  gap: 1.15rem;
+}
+.info-panel::-webkit-scrollbar { width: 4px; }
+.info-panel::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+.panel-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.panel-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+.stat-card.full { grid-column: 1 / -1; }
+.stat-lbl { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
+.stat-val { font-family: var(--mono); font-size: 1rem; font-weight: 700; color: var(--text); }
+.stat-unit { font-size: 0.6rem; color: var(--muted); }
+
+.slider-wrap, .control-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+.slider-top, .control-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.slider-title, .control-title { font-size: 0.8rem; font-weight: 600; }
+.slider-readout, .control-readout { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--bg3);
+  border-radius: 2px;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+  transition: transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:active { transform: scale(1.3); }
+
+.compare-bar-wrap { margin-top: 0.3rem; }
+.compare-bar-bg {
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.compare-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.15s, background 0.3s;
+  max-width: 100%;
+}
+.compare-context {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 5px;
+  min-height: 2.2em;
+  line-height: 1.5;
+  transition: color 0.3s;
+}
+
+.result-box {
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  border: 1px solid transparent;
+  min-height: 60px;
+  transition: background 0.3s, border-color 0.3s;
+}
+.result-box.escaped   { background: rgba(105,240,174,0.07); border-color: rgba(105,240,174,0.25); color: var(--success); }
+.result-box.marginal  { background: rgba(255,215,64,0.07);  border-color: rgba(255,215,64,0.25);  color: var(--warn); }
+.result-box.captured  { background: rgba(255,82,82,0.07);   border-color: rgba(255,82,82,0.25);   color: var(--danger); }
+
+.fact-box {
+  background: var(--bg3);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--text);
+}
+.mystery-box {
+  background: var(--bg3);
+  border-left: 2px solid var(--accent2);
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.65;
+  color: #ffb898;
+}
+.mystery-box::before {
+  content: '?  ';
+  font-style: normal;
+  font-weight: 700;
+  color: var(--accent2);
+}
+
+.launch-btn {
+  width: 100%;
+  padding: 0.7rem;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.launch-btn:hover { background: rgba(79,195,247,0.1); }
+.launch-btn:active { transform: scale(0.98); }
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mission-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+.mission-card.full { grid-column: 1 / -1; }
+.small-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.small-value {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.small-unit { font-size: 0.6rem; color: var(--muted); }
+
+.equation-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+}
+.eq { font-family: var(--mono); color: var(--accent); font-size: 0.92rem; }
+.eq-note { font-size: 0.66rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+@media (max-width: 1080px) {
+  .app { grid-template-columns: 220px 1fr 340px; }
+}
+@media (max-width: 900px) {
+  body { height: auto; overflow: auto; }
+  .app { grid-template-columns: 1fr; }
+  .sidebar, .info-panel { border: none; }
+  .canvas-area { min-height: 60vh; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <h1>Escape Velocity Explorer</h1>
+  <span class="header-sub">same visual sim, now with payload / propellant / impulse controls</span>
+</header>
+
+<div class="app">
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <div class="canvas-area">
+    <canvas id="space-canvas"></canvas>
+    <div class="world-label-overlay">
+      <div class="wl-name" id="wl-name">Earth</div>
+      <div class="wl-type" id="wl-type">terrestrial planet</div>
+    </div>
+  </div>
+
+  <aside class="info-panel">
+    <div class="panel-section">
+      <div class="panel-label">World Data</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-lbl">Mass</div>
+          <div class="stat-val" id="s-mass">—</div>
+          <div class="stat-unit">kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Radius</div>
+          <div class="stat-val" id="s-radius">—</div>
+          <div class="stat-unit">km</div>
+        </div>
+        <div class="stat-card full">
+          <div class="stat-lbl">Escape Velocity</div>
+          <div class="stat-val" id="s-esc">—</div>
+          <div class="stat-unit">km/s</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Surface gravity</div>
+          <div class="stat-val" id="s-grav">—</div>
+          <div class="stat-unit">m/s²</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">vs Earth gravity</div>
+          <div class="stat-val" id="s-grav-rel">—</div>
+          <div class="stat-unit">× g</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Mission Design Controls</div>
+
+      <div class="control-wrap">
+        <div class="control-top">
+          <span class="control-title">Payload mass</span>
+          <span class="control-readout" id="payload-out">1,000 kg</span>
+        </div>
+        <input type="range" id="payload" min="100" max="10000" step="100" value="1000">
+      </div>
+
+      <div class="control-wrap">
+        <div class="control-top">
+          <span class="control-title">Dry mass</span>
+          <span class="control-readout" id="dry-mass-out">5,000 kg</span>
+        </div>
+        <input type="range" id="dry-mass" min="500" max="20000" step="500" value="5000">
+      </div>
+
+      <div class="control-wrap">
+        <div class="control-top">
+          <span class="control-title">Propellant mass</span>
+          <span class="control-readout" id="prop-mass-out">20,000 kg</span>
+        </div>
+        <input type="range" id="prop-mass" min="1000" max="100000" step="1000" value="20000">
+      </div>
+
+      <div class="control-wrap">
+        <div class="control-top">
+          <span class="control-title">Specific impulse</span>
+          <span class="control-readout" id="isp-out">311 s</span>
+        </div>
+        <input type="range" id="isp" min="200" max="500" step="10" value="311">
+        <div class="compare-context" id="engine-hint">Kerosene/LOX (e.g. Falcon 9)</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Launch Speed</div>
+      <div class="slider-wrap">
+        <div class="slider-top">
+          <span class="slider-title">Your launch speed</span>
+          <span class="slider-readout" id="slider-readout">0.0 km/s</span>
+        </div>
+        <input type="range" id="speed-slider" min="0" max="25" step="0.1" value="0">
+        <div class="compare-bar-wrap">
+          <div class="compare-bar-bg">
+            <div class="compare-bar-fill" id="compare-bar" style="width:0%"></div>
+          </div>
+          <div class="compare-context" id="compare-ctx">Move the slider or press Fire to use the rocket-equation speed.</div>
+        </div>
+      </div>
+      <button class="launch-btn" id="launch-btn">Fire!</button>
+      <div class="result-box captured" id="result-box">Adjust the rocket and launch speed, then fire.</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Mission Results</div>
+      <div class="mission-grid">
+        <div class="mission-card">
+          <div class="small-label">Rocket Δv available</div>
+          <div class="small-value" id="dv-avail">0</div>
+          <div class="small-unit">m/s</div>
+        </div>
+        <div class="mission-card">
+          <div class="small-label">Mass ratio</div>
+          <div class="small-value" id="mass-ratio">0</div>
+          <div class="small-unit">m₀ / m₁</div>
+        </div>
+        <div class="mission-card">
+          <div class="small-label">Propellant fraction</div>
+          <div class="small-value" id="prop-frac">0</div>
+          <div class="small-unit">% of total mass</div>
+        </div>
+        <div class="mission-card">
+          <div class="small-label">Payload fraction</div>
+          <div class="small-value" id="payload-frac">0</div>
+          <div class="small-unit">% of total mass</div>
+        </div>
+        <div class="mission-card full">
+          <div class="small-label">Rocket-equation launch speed</div>
+          <div class="small-value" id="auto-speed">0.0</div>
+          <div class="small-unit">km/s — press Fire to use this automatically</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Did You Know</div>
+      <div class="fact-box" id="fact-box">Select a world.</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Something to Try</div>
+      <div class="mystery-box" id="mystery-box">Select a world.</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Rocket Equation</div>
+      <div class="equation-box">
+        <div class="eq">Δv = Isp × g₀ × ln(m₀ / m₁)</div>
+        <div class="eq-note">This page keeps the original escape-velocity visual, but now also estimates what your rocket can do based on payload, dry mass, propellant, and engine efficiency.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const G = 6.674e-11;
+const G0 = 9.80665;
+
+const WORLDS = [
+  { cat:'Inner Solar System', name:'Mercury', type:'rocky planet', mass:3.30e23, radius:2439.7, color:'#a89880', glow:false,
+    fact:'Mercury has almost no atmosphere, so there is very little to slow down incoming objects or hold in heat.',
+    mystery:'Try the same rocket on Mercury and Earth. Which one can it escape more easily?' },
+  { cat:'Inner Solar System', name:'Venus', type:'rocky planet', mass:4.87e24, radius:6051.8, color:'#e8c97a', glow:false,
+    fact:'Venus is close to Earth in size and mass, so its escape velocity is also similar.',
+    mystery:'Venus is a little smaller than Earth. Why is its escape speed still close?' },
+  { cat:'Inner Solar System', name:'Earth', type:'terrestrial planet', mass:5.97e24, radius:6371, color:'#4a90d9', glow:false,
+    fact:'Earth needs 11.2 km/s to escape, which is enough to hold onto most of our atmosphere.',
+    mystery:'Can you design a rocket that escapes Earth, then see if the same design is overpowered for the Moon?' },
+  { cat:'Inner Solar System', name:'Moon', type:'natural satellite', mass:7.34e22, radius:1737.4, color:'#aaaaaa', glow:false,
+    fact:'The Moon is much easier to leave than Earth because it has less mass and weaker gravity.',
+    mystery:'How much propellant can you remove and still escape the Moon?' },
+  { cat:'Inner Solar System', name:'Mars', type:'rocky planet', mass:6.39e23, radius:3389.5, color:'#c1440e', glow:false,
+    fact:'Mars is harder to leave than the Moon, but easier than Earth.',
+    mystery:'Try increasing specific impulse on Mars. Does it help more than adding payload hurts?' },
+  { cat:'Outer Solar System', name:'Jupiter', type:'gas giant', mass:1.90e27, radius:69911, color:'#c88b3a', glow:false,
+    fact:'Jupiter is so massive that escaping takes much more speed than from rocky planets.',
+    mystery:'Can any reasonable one-stage rocket in this slider range escape Jupiter?' },
+  { cat:'Outer Solar System', name:'Saturn', type:'gas giant', mass:5.68e26, radius:58232, color:'#e4d191', glow:false,
+    fact:'Saturn is less dense than Earth, but still has a much higher escape velocity because it is so massive.',
+    mystery:'Does being less dense automatically mean easier to escape?' },
+  { cat:'Outer Solar System', name:'Uranus', type:'ice giant', mass:8.68e25, radius:25362, color:'#7de8e8', glow:false,
+    fact:'Uranus is large enough that a small increase in rocket performance still may not be enough.',
+    mystery:'Compare Uranus and Neptune. Which one is harder to leave, and why?' },
+  { cat:'Outer Solar System', name:'Neptune', type:'ice giant', mass:1.02e26, radius:24622, color:'#4b70dd', glow:false,
+    fact:'Neptune is smaller than Uranus but has a higher escape speed because it packs in more mass.',
+    mystery:'What matters more for escape speed: being larger, or being more massive?' },
+  { cat:'Outer Solar System', name:'Pluto', type:'dwarf planet', mass:1.30e22, radius:1188.3, color:'#d4a96a', glow:false,
+    fact:'Pluto is so small that its escape velocity is only about 1.2 km/s.',
+    mystery:'How tiny can you make the rocket and still escape Pluto?' },
+  { cat:'The Sun', name:'The Sun', type:'G-type main sequence star', mass:1.99e30, radius:695700, color:'#fff176', glow:true,
+    fact:'The Sun needs an enormous escape speed compared with planets.',
+    mystery:'Why is escaping the Sun so different from escaping Earth?' }
+];
+
+WORLDS.forEach(w => {
+  const vEsc = Math.sqrt(2 * G * w.mass / (w.radius * 1000));
+  w.escVms = vEsc;
+  w.escV = vEsc / 1000;
+  w.surfG = G * w.mass / Math.pow(w.radius * 1000, 2);
+});
+
+const ENGINE_HINTS = [[200,'Cold gas thruster'],[250,'Hydrazine'],[311,'Kerosene/LOX (e.g. Falcon 9)'],[350,'LH2/LOX upper stage'],[410,'High-performance LH2/LOX'],[450,'RL-10 class'],[500,'Advanced propulsion']];
+
+let current = WORLDS.find(w => w.name === 'Earth');
+let animId = null;
+let rocketY = 0, rocketVy = 0, launching = false, rocketEscaped = false;
+let trailPoints = [];
+let starField = [];
+let canvasW = 0, canvasH = 0;
+
+const canvas = document.getElementById('space-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const area = canvas.parentElement;
+  canvasW = canvas.width = area.clientWidth;
+  canvasH = canvas.height = area.clientHeight;
+  buildStars();
+  drawScene();
+}
+
+function buildStars() {
+  starField = Array.from({length: 180}, () => ({
+    x: Math.random() * canvasW,
+    y: Math.random() * canvasH,
+    r: Math.random() * 1.3 + 0.2,
+    b: Math.random() * 0.6 + 0.3,
+    twinklePhase: Math.random() * Math.PI * 2
+  }));
+}
+
+function buildSidebar() {
+  const nav = document.getElementById('sidebar');
+  nav.innerHTML = '';
+  const cats = [...new Set(WORLDS.map(w => w.cat))];
+  cats.forEach(cat => {
+    const lbl = document.createElement('div');
+    lbl.className = 'cat-label';
+    lbl.textContent = cat;
+    nav.appendChild(lbl);
+    WORLDS.filter(w => w.cat === cat).forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'world-btn' + (w === current ? ' active' : '');
+      btn.dataset.name = w.name;
+
+      const icon = document.createElement('div');
+      icon.className = 'world-icon';
+      icon.style.background = w.glow
+        ? `radial-gradient(circle at 38% 32%, #fff 0%, ${w.color} 45%, ${w.color}88 100%)`
+        : `radial-gradient(circle at 38% 32%, #fff8 0%, ${w.color} 55%, ${w.color}55 100%)`;
+
+      const info = document.createElement('div');
+      const fmt = v => v >= 1000 ? (v/1000).toFixed(1)+'k' : v >= 1 ? v.toFixed(1) : v.toFixed(2);
+      info.innerHTML = `<span class="world-name">${w.name}</span><span class="world-esc">${fmt(w.escV)} km/s escape</span>`;
+
+      btn.appendChild(icon);
+      btn.appendChild(info);
+      btn.addEventListener('click', () => selectWorld(w));
+      nav.appendChild(btn);
+    });
+  });
+}
+
+function fmtSci(m) {
+  const exp = Math.floor(Math.log10(m));
+  const coeff = (m / Math.pow(10, exp)).toFixed(2);
+  return `${coeff}×10<sup>${exp}</sup>`;
+}
+
+function fmtNum(n) {
+  return n >= 1000 ? n.toLocaleString('en-US', {maximumFractionDigits:0}) : n.toFixed(1);
+}
+
+function getIspHint(v) {
+  let h = ENGINE_HINTS[0][1];
+  for (const [k, label] of ENGINE_HINTS) if (v >= k) h = label;
+  return h;
+}
+
+function getRocketMetrics() {
+  const dryMass = +document.getElementById('dry-mass').value;
+  const propMass = +document.getElementById('prop-mass').value;
+  const payload = +document.getElementById('payload').value;
+  const isp = +document.getElementById('isp').value;
+  const m0 = dryMass + propMass + payload;
+  const m1 = dryMass + payload;
+  const massRatio = m0 / m1;
+  const dvAvail = isp * G0 * Math.log(massRatio);
+  const propFrac = (propMass / m0) * 100;
+  const payloadFrac = (payload / m0) * 100;
+  return { dryMass, propMass, payload, isp, m0, m1, massRatio, dvAvail, propFrac, payloadFrac, autoSpeed: dvAvail / 1000 };
+}
+
+function updateMissionUI() {
+  const m = getRocketMetrics();
+  document.getElementById('dry-mass-out').textContent = m.dryMass.toLocaleString() + ' kg';
+  document.getElementById('prop-mass-out').textContent = m.propMass.toLocaleString() + ' kg';
+  document.getElementById('payload-out').textContent = m.payload.toLocaleString() + ' kg';
+  document.getElementById('isp-out').textContent = m.isp + ' s';
+  document.getElementById('engine-hint').textContent = getIspHint(m.isp);
+
+  document.getElementById('dv-avail').textContent = Math.round(m.dvAvail).toLocaleString();
+  document.getElementById('mass-ratio').textContent = m.massRatio.toFixed(2);
+  document.getElementById('prop-frac').textContent = m.propFrac.toFixed(1);
+  document.getElementById('payload-frac').textContent = m.payloadFrac.toFixed(1);
+  document.getElementById('auto-speed').textContent = m.autoSpeed.toFixed(1);
+
+  if (!launching) drawScene();
+}
+
+function selectWorld(w) {
+  current = w;
+  stopAnim();
+  document.querySelectorAll('.world-btn').forEach(b => b.classList.toggle('active', b.dataset.name === w.name));
+  document.getElementById('wl-name').textContent = w.name;
+  document.getElementById('wl-name').style.color = w.glow ? '#fff9c4' : '#e8eaf6';
+  document.getElementById('wl-type').textContent = w.type;
+  document.getElementById('s-mass').innerHTML = fmtSci(w.mass);
+  document.getElementById('s-radius').textContent = fmtNum(w.radius);
+  document.getElementById('s-esc').textContent = w.escV >= 1000 ? w.escV.toFixed(0) : w.escV.toFixed(1);
+  document.getElementById('s-grav').textContent = w.surfG.toFixed(1);
+  document.getElementById('s-grav-rel').textContent = (w.surfG / 9.81).toFixed(2);
+  document.getElementById('fact-box').textContent = w.fact;
+  document.getElementById('mystery-box').textContent = w.mystery;
+
+  const slider = document.getElementById('speed-slider');
+  slider.max = Math.max(25, Math.ceil(w.escV * 2));
+  slider.value = 0;
+  updateSliderUI(0);
+  document.getElementById('result-box').textContent = 'Adjust the rocket and launch speed, then fire.';
+  document.getElementById('result-box').className = 'result-box captured';
+
+  updateMissionUI();
+  drawScene();
+}
+
+document.getElementById('speed-slider').addEventListener('input', function() {
+  updateSliderUI(+this.value);
+});
+
+function updateSliderUI(v) {
+  document.getElementById('slider-readout').textContent = v.toFixed(1) + ' km/s';
+  const pct = Math.min(100, v / current.escV * 100);
+  const bar = document.getElementById('compare-bar');
+  bar.style.width = pct + '%';
+  let txt = '';
+  if (pct >= 100) {
+    bar.style.background = '#69f0ae';
+    txt = `${pct.toFixed(0)}% of escape speed — fast enough to leave ${current.name}.`;
+    document.getElementById('compare-ctx').style.color = '#69f0ae';
+  } else if (pct >= 80) {
+    bar.style.background = '#ffd740';
+    txt = `${pct.toFixed(0)}% of escape speed — close, but gravity still wins.`;
+    document.getElementById('compare-ctx').style.color = '#ffd740';
+  } else if (pct >= 50) {
+    bar.style.background = '#ff9800';
+    txt = `${pct.toFixed(0)}% of escape speed — going up, then falling back.`;
+    document.getElementById('compare-ctx').style.color = '#ff9800';
+  } else {
+    bar.style.background = '#ff5252';
+    txt = `${pct.toFixed(0)}% of escape speed — nowhere near enough to escape.`;
+    document.getElementById('compare-ctx').style.color = '#ff5252';
+  }
+  document.getElementById('compare-ctx').textContent = txt;
+}
+
+document.getElementById('launch-btn').addEventListener('click', () => {
+  const m = getRocketMetrics();
+  const slider = document.getElementById('speed-slider');
+  const manualV = +slider.value;
+  const autoV = m.autoSpeed;
+  const useV = autoV > 0 ? autoV : manualV;
+
+  slider.value = Math.min(+slider.max, useV);
+  updateSliderUI(+slider.value);
+
+  stopAnim();
+  const escaped = useV >= current.escV;
+  const marginal = !escaped && useV >= current.escV * 0.85;
+  rocketEscaped = escaped;
+  launching = true;
+  rocketY = getBodyY() - getBodyR() - 20;
+  rocketVy = escaped ? -5 : -3.5;
+  trailPoints = [];
+
+  const rb = document.getElementById('result-box');
+  if (escaped) {
+    rb.className = 'result-box escaped';
+    rb.textContent = `Escaped. Your rocket equation gives about ${autoV.toFixed(1)} km/s, which beats ${current.name}'s ${current.escV.toFixed(1)} km/s escape speed.`;
+  } else if (marginal) {
+    rb.className = 'result-box marginal';
+    rb.textContent = `Almost. Your design gives about ${autoV.toFixed(1)} km/s, only ${(current.escV - useV).toFixed(1)} km/s short of escape.`;
+  } else {
+    rb.className = 'result-box captured';
+    rb.textContent = `Captured. Your rocket equation gives about ${autoV.toFixed(1)} km/s, but ${current.name} needs ${current.escV.toFixed(1)} km/s.`;
+  }
+
+  startAnim();
+});
+
+function getBodyY() { return canvasH * 0.62; }
+function getBodyR() {
+  const logR = Math.log10(current.radius);
+  const minLog = Math.log10(1188.3);
+  const maxLog = Math.log10(695700);
+  const norm = (logR - minLog) / (maxLog - minLog);
+  return 34 + norm * 150;
+}
+
+let twinkleT = 0;
+function drawScene(rY, trail) {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  const grad = ctx.createLinearGradient(0, 0, 0, canvasH);
+  grad.addColorStop(0, '#03040a');
+  grad.addColorStop(1, '#07080f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  twinkleT += 0.015;
+  starField.forEach(s => {
+    const brightness = s.b + Math.sin(twinkleT + s.twinklePhase) * 0.15;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${brightness})`;
+    ctx.fill();
+  });
+
+  const cx = canvasW / 2;
+  const cy = getBodyY();
+  const br = getBodyR();
+  const w = current;
+
+  if (w.glow) {
+    const glowR = br * 2.2;
+    const gGlow = ctx.createRadialGradient(cx, cy, br * 0.5, cx, cy, glowR);
+    gGlow.addColorStop(0, w.color + '44');
+    gGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = gGlow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const bodyGrad = ctx.createRadialGradient(cx - br*0.3, cy - br*0.3, br*0.05, cx, cy, br);
+  bodyGrad.addColorStop(0, lighten(w.color, 0.5));
+  bodyGrad.addColorStop(0.5, w.color);
+  bodyGrad.addColorStop(1, darken(w.color, 0.4));
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.fill();
+
+  const atmGrad = ctx.createRadialGradient(cx, cy, br * 0.85, cx, cy, br * 1.2);
+  atmGrad.addColorStop(0, 'transparent');
+  atmGrad.addColorStop(1, w.color + '22');
+  ctx.fillStyle = atmGrad;
+  ctx.beginPath(); ctx.arc(cx, cy, br * 1.2, 0, Math.PI * 2); ctx.fill();
+
+  const m = getRocketMetrics();
+  const rocketX = cx;
+  const ry = rY !== undefined ? rY : cy - br - 20;
+
+  if (trail && trail.length > 1) {
+    for (let i = 1; i < trail.length; i++) {
+      const alpha = (i / trail.length) * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(rocketX, trail[i-1]);
+      ctx.lineTo(rocketX, trail[i]);
+      ctx.strokeStyle = `rgba(255,130,40,${alpha})`;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+  }
+
+  drawRocket(rocketX, ry, m);
+}
+
+function drawRocket(x, y, metrics) {
+  const scale = 0.9 + Math.min(0.8, metrics.propMass / 100000 * 0.8);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = '#d0d8e8';
+  ctx.beginPath();
+  ctx.moveTo(0, -18); ctx.lineTo(8, 2); ctx.lineTo(8, 16); ctx.lineTo(-8, 16); ctx.lineTo(-8, 2);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#ff5252';
+  ctx.beginPath();
+  ctx.moveTo(-8, 2); ctx.lineTo(0, -18); ctx.lineTo(8, 2);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#4fc3f7';
+  ctx.beginPath(); ctx.ellipse(0, 4, 4, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#607d8b';
+  ctx.beginPath(); ctx.moveTo(-8, 8); ctx.lineTo(-17, 16); ctx.lineTo(-8, 16); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(8, 8);  ctx.lineTo(17, 16);  ctx.lineTo(8, 16);  ctx.closePath(); ctx.fill();
+
+  const flameLen = 10 + (metrics.isp - 200) / 20 + metrics.propFrac / 4;
+  if (launching) {
+    const fl = 0.7 + Math.random() * 0.3;
+    ctx.fillStyle = `rgba(255,${80 + Math.floor(Math.random()*120)},20,${fl})`;
+    ctx.beginPath();
+    ctx.moveTo(-6, 16); ctx.lineTo(6, 16); ctx.lineTo(0, 16 + flameLen + Math.random() * 8);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = `rgba(255,220,80,${fl * 0.6})`;
+    ctx.beginPath();
+    ctx.moveTo(-3, 16); ctx.lineTo(3, 16); ctx.lineTo(0, 16 + flameLen * 0.6 + Math.random() * 4);
+    ctx.closePath(); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function startAnim() {
+  if (animId) cancelAnimationFrame(animId);
+  const bodyY = getBodyY();
+  const bodyR = getBodyR();
+  rocketY = bodyY - bodyR - 20;
+  trailPoints = [rocketY];
+
+  function step() {
+    rocketY += rocketVy;
+    if (rocketEscaped) rocketVy *= 1.018;
+    else rocketVy += 0.06;
+    trailPoints.push(rocketY);
+    if (trailPoints.length > 80) trailPoints.shift();
+    drawScene(rocketY, trailPoints);
+
+    if (rocketEscaped && rocketY < -60) { launching = false; drawScene(); return; }
+    if (!rocketEscaped && rocketVy > 0 && rocketY >= bodyY - bodyR - 20) {
+      rocketY = bodyY - bodyR - 20;
+      launching = false;
+      drawScene();
+      return;
+    }
+    animId = requestAnimationFrame(step);
+  }
+  animId = requestAnimationFrame(step);
+}
+
+function stopAnim() {
+  if (animId) cancelAnimationFrame(animId);
+  launching = false;
+  rocketEscaped = false;
+  trailPoints = [];
+  rocketY = 0;
+  rocketVy = 0;
+}
+
+function lighten(hex, amount) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.min(255,r+Math.round(255*amount))},${Math.min(255,g+Math.round(255*amount))},${Math.min(255,b+Math.round(255*amount))})`;
+}
+function darken(hex, amount) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.max(0,r-Math.round(255*amount))},${Math.max(0,g-Math.round(255*amount))},${Math.max(0,b-Math.round(255*amount))})`;
+}
+
+['dry-mass','prop-mass','isp','payload'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateMissionUI);
+});
+
+buildSidebar();
+selectWorld(current);
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+updateMissionUI();
+</script>
+</body>
+</html>
