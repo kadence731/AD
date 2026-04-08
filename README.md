@@ -10,6 +10,8 @@ A live-calculation tool where students design a spacecraft mission to the Moon, 
 
 Click or copy this link to access the activity:    https://kadence731.github.io/AD/escape_velocity_explorer.html
 
+New test: https://kadence731.github.io/AD/escape_velocity_explorer2.html
+
 ---
 
 ## MATLAB Orbitals (Grades 10-12)
