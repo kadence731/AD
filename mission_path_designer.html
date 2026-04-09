@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mission Path Designer</title>
+<style>
+  :root{
+    --bg:#070b17; --panel:#0f1730; --panel2:#121d3a; --line:rgba(255,255,255,.10);
+    --text:#ecf3ff; --muted:#95a6d8; --accent:#63d3ff; --accent2:#ffb357; --good:#69f0ae; --bad:#ff6b7a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at top,#10214d 0,#070b17 40%);color:var(--text);min-height:100vh}
+  header{padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(7,11,23,.88);display:flex;gap:14px;align-items:center;position:sticky;top:0;backdrop-filter:blur(6px);z-index:10}
+  header h1{margin:0;font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+  header .sub{font-size:.76rem;color:var(--muted)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .layout{display:grid;grid-template-columns:300px 1fr 320px;gap:14px;padding:14px;min-height:calc(100vh - 61px)}
+  .panel{background:linear-gradient(180deg,rgba(15,23,48,.96),rgba(10,16,34,.96));border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+  .panel h2{margin:0 0 10px;font-size:.9rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;font-weight:700}
+  .left,.right{padding:14px;display:flex;flex-direction:column;gap:14px}
+  .canvas-wrap{position:relative;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;min-height:620px;background:radial-gradient(circle at center,#091126 0,#04070f 70%);border-radius:16px}
+  .overlay{position:absolute;inset:0;pointer-events:none}
+  .tag{position:absolute;top:16px;left:16px;background:rgba(9,17,38,.7);border:1px solid var(--line);padding:10px 12px;border-radius:12px;backdrop-filter:blur(4px)}
+  .tag .big{font-size:1.1rem;font-weight:800;color:var(--accent)}
+  .tag .small{font-size:.74rem;color:var(--muted)}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .field label{font-size:.76rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+  select,input[type=range]{width:100%}
+  select{background:#0a1126;color:var(--text);border:1px solid var(--line);padding:10px;border-radius:10px}
+  input[type=range]{accent-color:var(--accent)}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .readout{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent)}
+  .buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{border:none;border-radius:12px;padding:12px 10px;font-weight:700;cursor:pointer}
+  .primary{background:linear-gradient(135deg,var(--accent),#4c8cff);color:#07111d}
+  .secondary{background:#202d55;color:var(--text);border:1px solid var(--line)}
+  .mission-card{border-left:3px solid var(--accent2);background:#131b35;padding:12px;border-radius:10px}
+  .mission-title{font-weight:800;margin-bottom:6px;color:#ffd29a}
+  .mission-body{font-size:.9rem;line-height:1.45;color:#dfe8ff}
+  .score{font-size:2rem;font-weight:900;color:var(--accent)}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .metric{padding:10px;border-radius:10px;background:#131b35;border:1px solid var(--line)}
+  .metric .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+  .metric .v{font-size:1.15rem;font-weight:800}
+  .status{padding:12px;border-radius:12px;font-weight:700;line-height:1.45;background:#151f3d;border:1px solid var(--line)}
+  .good{color:var(--good)} .bad{color:var(--bad)} .mid{color:#ffd166}
+  .tiny{font-size:.78rem;color:var(--muted);line-height:1.45}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:8px}
+  .sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+  @media (max-width:1150px){.layout{grid-template-columns:1fr}.left,.right{order:2}.canvas-wrap{order:1}}
+</style>
+</head>
+<body>
+<header>
+  <div class="dot"></div>
+  <h1>Mission Path Designer</h1>
+  <div class="sub">Design a route, trade travel time against fuel, and try to beat the challenge card.</div>
+</header>
+<div class="layout">
+  <section class="panel left">
+    <div>
+      <h2>Mission Setup</h2>
+      <div class="card">
+        <div class="field">
+          <label for="destination">Destination</label>
+          <select id="destination"></select>
+        </div>
+        <div class="field">
+          <label for="profile">Mission Profile</label>
+          <select id="profile">
+            <option value="balanced">Balanced</option>
+            <option value="fast">Fast</option>
+            <option value="fuel">Fuel Saver</option>
+            <option value="freereturn">Free Return / Loop</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="row"><label for="burn">Burn Level</label><span id="burnOut" class="readout">50</span></div>
+          <input id="burn" type="range" min="0" max="100" value="50">
+        </div>
+        <div class="field">
+          <div class="row"><label for="angle">Departure Angle</label><span id="angleOut" class="readout">0°</span></div>
+          <input id="angle" type="range" min="-80" max="80" value="0">
+        </div>
+        <div class="field">
+          <div class="row"><label for="window">Launch Window</label><span id="windowOut" class="readout">0 days</span></div>
+          <input id="window" type="range" min="0" max="180" value="0">
+        </div>
+        <div class="buttons">
+          <button class="primary" id="runBtn">Launch Mission</button>
+          <button class="secondary" id="newMissionBtn">New Challenge</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2>Challenge Card</h2>
+      <div class="mission-card">
+        <div id="missionTitle" class="mission-title">Loading…</div>
+        <div id="missionBody" class="mission-body"></div>
+      </div>
+    </div>
+
+    <div>
+      <h2>Path Key</h2>
+      <div class="card legend">
+        <span><i class="sw" style="background:#4fe3ff"></i> Earth orbit</span>
+        <span><i class="sw" style="background:#ffd166"></i> Target orbit</span>
+        <span><i class="sw" style="background:#ff8fab"></i> Your path</span>
+        <span><i class="sw" style="background:#69f0ae"></i> Good result</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel canvas-wrap">
+    <canvas id="simCanvas" width="920" height="680"></canvas>
+    <div class="overlay">
+      <div class="tag"><div class="big" id="overlayTitle">Earth → Moon</div><div class="small" id="overlaySub">Balanced mission profile</div></div>
+    </div>
+  </section>
+
+  <section class="panel right">
+    <div>
+      <h2>Mission Results</h2>
+      <div class="card">
+        <div class="row" style="margin-bottom:8px"><div>Mission Score</div><div id="score" class="score">--</div></div>
+        <div id="status" class="status mid">Adjust the controls and press Launch Mission.</div>
+      </div>
+    </div>
+    <div>
+      <h2>Metrics</h2>
+      <div class="metrics">
+        <div class="metric"><div class="k">Travel Time</div><div id="travelTime" class="v">--</div></div>
+        <div class="metric"><div class="k">Fuel Score</div><div id="fuelScore" class="v">--</div></div>
+        <div class="metric"><div class="k">Arrival Error</div><div id="arrivalErr" class="v">--</div></div>
+        <div class="metric"><div class="k">Mission Type</div><div id="missionType" class="v">--</div></div>
+      </div>
+    </div>
+    <div>
+      <h2>Why this is interesting</h2>
+      <div class="card tiny" id="factBox">
+        Longer is not always worse. Some paths trade speed for lower energy, which can mean less fuel even when the trip takes more time.
+      </div>
+    </div>
+    <div>
+      <h2>Apollo 8 vs Artemis-style comparison</h2>
+      <div class="card tiny">
+        In this simplified model, a more direct path can be faster but cost more burn. A longer looping or free-return style path may take more time while reducing the burn penalty or increasing safety margin.
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+const bodies = {
+  moon:{name:'Moon', orbit:1.35, color:'#dfe4f4', fact:'The Moon is close enough that students can quickly compare a fast direct route with a looping return path.'},
+  venus:{name:'Venus', orbit:2.0, color:'#f0c36c', fact:'Venus sits inward from Earth, so efficient paths often curve toward the Sun instead of just aiming straight at the target.'},
+  mars:{name:'Mars', orbit:3.15, color:'#ff7f66', fact:'Mars is a great example of the time-versus-fuel tradeoff because a gentle transfer arc is usually cheaper than a brute-force sprint.'},
+  jupiter:{name:'Jupiter', orbit:5.1, color:'#d7a56c', fact:'Jupiter is far enough away that “fast” burns get expensive quickly, so students see why mission planners care about transfer efficiency.'}
+};
+const missionTemplates = [
+  {title:'Beat the clock', body:'Reach {dest} in under {days} days without letting your fuel score go above {fuel}.', rule:(r,m)=>r.timeDays<=m.days && r.fuel<=m.fuel},
+  {title:'Fuel miser', body:'Reach {dest} with a fuel score under {fuel}. Travel time can be longer, but arrival error must stay below {err}.', rule:(r,m)=>r.fuel<=m.fuel && r.error<=m.err},
+  {title:'Precision arrival', body:'Reach {dest} with arrival error below {err} and keep your score above {score}.', rule:(r,m)=>r.error<=m.err && r.score>=m.score},
+  {title:'Apollo vs Artemis', body:'Make a path to {dest} that takes longer than {days} days but still uses a fuel score below {fuel}.', rule:(r,m)=>r.timeDays>=m.days && r.fuel<=m.fuel}
+];
+
+const els = {
+  destination:document.getElementById('destination'), profile:document.getElementById('profile'),
+  burn:document.getElementById('burn'), angle:document.getElementById('angle'), window:document.getElementById('window'),
+  burnOut:document.getElementById('burnOut'), angleOut:document.getElementById('angleOut'), windowOut:document.getElementById('windowOut'),
+  runBtn:document.getElementById('runBtn'), newMissionBtn:document.getElementById('newMissionBtn'),
+  missionTitle:document.getElementById('missionTitle'), missionBody:document.getElementById('missionBody'),
+  overlayTitle:document.getElementById('overlayTitle'), overlaySub:document.getElementById('overlaySub'),
+  score:document.getElementById('score'), status:document.getElementById('status'), travelTime:document.getElementById('travelTime'),
+  fuelScore:document.getElementById('fuelScore'), arrivalErr:document.getElementById('arrivalErr'), missionType:document.getElementById('missionType'),
+  factBox:document.getElementById('factBox')
+};
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let currentMission = null;
+let animation = null;
+
+Object.entries(bodies).forEach(([key,b])=>{
+  const opt=document.createElement('option'); opt.value=key; opt.textContent=b.name; els.destination.appendChild(opt);
+});
+els.destination.value='moon';
+
+function updateReadouts(){
+  els.burnOut.textContent = els.burn.value;
+  els.angleOut.textContent = `${els.angle.value}°`;
+  els.windowOut.textContent = `${els.window.value} days`;
+  const dest=bodies[els.destination.value];
+  els.overlayTitle.textContent = `Earth → ${dest.name}`;
+  els.overlaySub.textContent = `${prettyProfile(els.profile.value)} mission profile`;
+  els.factBox.textContent = dest.fact;
+}
+function prettyProfile(p){ return ({balanced:'Balanced',fast:'Fast',fuel:'Fuel Saver',freereturn:'Free Return'}[p]) || p; }
+
+function makeMission(){
+  const destKey = els.destination.value;
+  const destName = bodies[destKey].name;
+  const t = missionTemplates[Math.floor(Math.random()*missionTemplates.length)];
+  const mission = {template:t, dest:destKey};
+  mission.days = ({moon:6,venus:110,mars:260,jupiter:700}[destKey]||200) + Math.floor(Math.random()*40-10);
+  mission.fuel = ({moon:42,venus:58,mars:66,jupiter:80}[destKey]||60) + Math.floor(Math.random()*8);
+  mission.err = ({moon:8,venus:14,mars:18,jupiter:22}[destKey]||15) + Math.floor(Math.random()*6);
+  mission.score = ({moon:78,venus:76,mars:74,jupiter:70}[destKey]||75) + Math.floor(Math.random()*8);
+  currentMission = mission;
+  els.missionTitle.textContent = t.title;
+  els.missionBody.textContent = t.body
+    .replace('{dest}',destName)
+    .replace('{days}',mission.days)
+    .replace('{fuel}',mission.fuel)
+    .replace('{err}',mission.err)
+    .replace('{score}',mission.score);
+}
+
+function simulateMission(){
+  const dest = bodies[els.destination.value];
+  const profile = els.profile.value;
+  const burn = +els.burn.value;
+  const angle = +els.angle.value;
+  const window = +els.window.value;
+  const base = {
+    moon:{time:5,fuel:38,error:6},
+    venus:{time:125,fuel:52,error:11},
+    mars:{time:250,fuel:60,error:15},
+    jupiter:{time:730,fuel:78,error:20}
+  }[els.destination.value];
+
+  const profileOffsets = {
+    balanced:{time:0,fuel:0,error:0,curve:0.18},
+    fast:{time:-0.28,fuel:+16,error:+4,curve:0.06},
+    fuel:{time:+0.20,fuel:-10,error:+2,curve:0.22},
+    freereturn:{time:+0.32,fuel:-4,error:-2,curve:0.34}
+  }[profile];
+
+  const burnNorm = (burn-50)/50;
+  const angleAbs = Math.abs(angle);
+  const timeDays = Math.max(2, base.time * (1 + profileOffsets.time - 0.32*burnNorm + 0.0015*window + 0.0009*angleAbs));
+  const fuel = Math.max(5, base.fuel + profileOffsets.fuel + 22*Math.abs(burnNorm) + 0.07*angleAbs + 0.03*window);
+  const error = Math.max(0.5, base.error + profileOffsets.error + 0.11*angleAbs + 0.06*Math.abs(window - idealWindow(profile, els.destination.value)) + 5*Math.max(0, -burnNorm));
+  const score = Math.max(0, Math.round(100 - 0.55*fuel - 0.18*error - 0.05*timeDays + scoreBonus(profile, burnNorm, angle, window)));
+  const missionType = classify(profile,burnNorm,error,timeDays);
+  return {timeDays,fuel,error,score,missionType,curve:profileOffsets.curve + angle/220};
+}
+function idealWindow(profile,d){
+  return {moon:{balanced:20,fast:5,fuel:35,freereturn:40},venus:{balanced:80,fast:50,fuel:100,freereturn:120},mars:{balanced:95,fast:60,fuel:120,freereturn:140},jupiter:{balanced:110,fast:90,fuel:135,freereturn:150}}[d][profile];
+}
+function scoreBonus(profile,burnNorm,angle,window){
+  const centered = 12 - Math.min(12, Math.abs(window-90)/7);
+  const angleBonus = 10 - Math.min(10, Math.abs(angle)/8);
+  const burnBonus = 8 - Math.min(8, Math.abs(burnNorm)*16);
+  return (profile==='balanced'?6:profile==='freereturn'?4:2) + centered + angleBonus + burnBonus;
+}
+function classify(profile,burnNorm,error,time){
+  if(profile==='freereturn') return 'Looping';
+  if(profile==='fast' || burnNorm>0.45) return 'Direct';
+  if(error<10 && burnNorm<0.2) return 'Transfer';
+  return time>300 ? 'Long arc' : 'Balanced';
+}
+
+function drawScene(progress=1, result=null){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // star field
+  for(let i=0;i<180;i++){
+    const x=(i*97)%canvas.width, y=(i*53)%canvas.height, r=(i%3)+0.4;
+    ctx.fillStyle=`rgba(255,255,255,${0.18 + (i%5)*0.08})`; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  const cx=canvas.width/2, cy=canvas.height/2, earthOrbitR=110;
+  // Sun
+  const sunGrad=ctx.createRadialGradient(cx,cy,15,cx,cy,40); sunGrad.addColorStop(0,'#fff5a8'); sunGrad.addColorStop(1,'#ffae00');
+  ctx.fillStyle=sunGrad; ctx.beginPath(); ctx.arc(cx,cy,22,0,Math.PI*2); ctx.fill();
+
+  // Earth orbit
+  ctx.strokeStyle='#4fe3ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,earthOrbitR,0,Math.PI*2); ctx.stroke();
+  const earthAng = -Math.PI/5;
+  const earthX = cx + earthOrbitR*Math.cos(earthAng), earthY = cy + earthOrbitR*Math.sin(earthAng);
+  ctx.fillStyle='#4aa6ff'; ctx.beginPath(); ctx.arc(earthX,earthY,9,0,Math.PI*2); ctx.fill();
+
+  const dest = bodies[els.destination.value];
+  const destR = earthOrbitR*dest.orbit;
+  ctx.strokeStyle='#ffd166'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,destR,0,Math.PI*2); ctx.stroke();
+  const phase = (+els.window.value/180)*Math.PI*2 + destR/280;
+  const targetX = cx + destR*Math.cos(phase), targetY = cy + destR*Math.sin(phase);
+  ctx.fillStyle=dest.color; ctx.beginPath(); ctx.arc(targetX,targetY, dest.name==='Jupiter'?16:10,0,Math.PI*2); ctx.fill();
+
+  if(result){
+    const startX=earthX, startY=earthY;
+    const midX = (startX+targetX)/2 + result.curve*(targetY-startY)*1.2;
+    const midY = (startY+targetY)/2 - result.curve*(targetX-startX)*1.2;
+    ctx.strokeStyle='#ff8fab'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(startX,startY);
+    const steps=180; let craftX=startX, craftY=startY;
+    for(let i=1;i<=steps*progress;i++){
+      const t=i/steps;
+      const x = (1-t)*(1-t)*startX + 2*(1-t)*t*midX + t*t*targetX;
+      const y = (1-t)*(1-t)*startY + 2*(1-t)*t*midY + t*t*targetY;
+      ctx.lineTo(x,y); craftX=x; craftY=y;
+    }
+    ctx.stroke();
+    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(craftX,craftY,5,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function runMission(){
+  const result = simulateMission();
+  if(animation) cancelAnimationFrame(animation);
+  const start = performance.now();
+  function frame(now){
+    const p = Math.min(1,(now-start)/1800);
+    drawScene(p,result);
+    if(p<1) animation=requestAnimationFrame(frame); else animation=null;
+  }
+  animation=requestAnimationFrame(frame);
+
+  els.travelTime.textContent = `${Math.round(result.timeDays)} d`;
+  els.fuelScore.textContent = result.fuel.toFixed(0);
+  els.arrivalErr.textContent = result.error.toFixed(1);
+  els.missionType.textContent = result.missionType;
+  els.score.textContent = result.score;
+
+  let successText='';
+  let cls='mid';
+  if(currentMission && currentMission.template.rule(result,currentMission)){
+    successText = `Challenge complete. You reached ${bodies[els.destination.value].name} with a score of ${result.score}.`;
+    cls='good';
+  } else if(result.error < 12 && result.score >= 70){
+    successText = `Solid mission. You arrived successfully, but you did not beat the challenge card yet.`;
+    cls='mid';
+  } else {
+    successText = `Mission needs work. Try shifting the launch window or profile before adding more burn.`;
+    cls='bad';
+  }
+  els.status.className = `status ${cls}`;
+  els.status.textContent = successText;
+}
+
+['destination','profile','burn','angle','window'].forEach(id=>els[id].addEventListener('input', ()=>{updateReadouts(); drawScene();}));
+els.runBtn.addEventListener('click', runMission);
+els.newMissionBtn.addEventListener('click', ()=>{makeMission(); drawScene(); els.status.className='status mid'; els.status.textContent='New challenge loaded. Adjust the controls and press Launch Mission.';});
+updateReadouts(); makeMission(); drawScene();
+</script>
+</body>
+</html>
