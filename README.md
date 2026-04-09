@@ -23,4 +23,4 @@ MATLAB Orbital Challenge (Extra Chelle
 
 [description]
 
-Click or copy this link to access the acitivity: 
+Click or copy this link to access the acitivity: https://kadence731.github.io/AD/plane_scavenger_hunt_sim.html
