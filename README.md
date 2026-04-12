@@ -12,15 +12,12 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 
 ---
 
-MATLAB Orbital Challenge (Extra Chelle
-
- - Download the 3 files ending in `orbit_speed_explorer.m` to the DOWNLOADS folder on your computer.
- - Then open your Downloads folder and double-click on a file to open MATLAB.
-
----
-
 ## Aerospace Mission Plan?? (Grades 10-12)
 
-[description]
+ - Download the 3 files ending in `.m` to the DOWNLOADS folder on your computer.
+    - 
+    - 
+    - 
+ - Then open your Downloads folder and double-click on a file to open MATLAB.
 
 Click or copy this link to access the acitivity: https://kadence731.github.io/AD/plane_scavenger_hunt_sim.html
