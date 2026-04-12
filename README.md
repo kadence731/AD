@@ -15,9 +15,9 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 ## Aerospace Mission Plan?? (Grades 10-12)
 
  - Download the 3 files ending in `.m` to the DOWNLOADS folder on your computer.
-    - 
-    - 
-    - 
+  - `.m`
+  - `.m`
+  - `.m`
  - Then open your Downloads folder and double-click on a file to open MATLAB.
 
 Click or copy this link to access the acitivity: https://kadence731.github.io/AD/plane_scavenger_hunt_sim.html
