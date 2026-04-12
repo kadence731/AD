@@ -14,5 +14,5 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 
 ## Orbit Simulation Explorer
 
- - Download the MATLAB file`orbit_student_editor.m` to the DOWNLOADS folder on your computer.
+ - Download the MATLAB file`orbit_simulation_explorer.m` to the DOWNLOADS folder on your computer.
  - Then open your Downloads folder and double-click on the file to open MATLAB.
