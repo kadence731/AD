@@ -4,7 +4,7 @@ Please follow the instructions below to access your activity for today.
 
 ---
 
-## Mission Design Challenge (Grades 6-9)
+## Mission Design Challenge
 
 A live-calculation tool where students try to escape planets like Earth and Jupiter by adjusting launch variables.
 
@@ -12,12 +12,7 @@ Click or copy this link to access the activity:    https://kadence731.github.io/
 
 ---
 
-## Aerospace Mission Plan?? (Grades 10-12)
+## Orbit Simulation Explorer
 
- - Download the 3 files ending in `.m` to the DOWNLOADS folder on your computer.
-  - `.m`
-  - `.m`
-  - `.m`
- - Then open your Downloads folder and double-click on a file to open MATLAB.
-
-Click or copy this link to access the acitivity: https://kadence731.github.io/AD/plane_scavenger_hunt_sim.html
+ - Download the MATLAB file`orbit_student_editor.m` to the DOWNLOADS folder on your computer.
+ - Then open your Downloads folder and double-click on the file to open MATLAB.
