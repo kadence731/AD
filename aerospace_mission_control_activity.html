@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Control: Aerospace Challenge</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #10233c;
+      --panel2: #153252;
+      --text: #e9f2ff;
+      --muted: #a7bfdc;
+      --accent: #7dd3fc;
+      --accent2: #fbbf24;
+      --good: #86efac;
+      --bad: #fca5a5;
+      --shadow: 0 10px 28px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, #153457 0%, #0a1526 42%, #050b14 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .stars, .stars2 {
+      position: fixed; inset: 0; pointer-events: none; opacity: .6;
+      background-image:
+        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,.9), transparent),
+        radial-gradient(1px 1px at 90px 160px, rgba(255,255,255,.6), transparent),
+        radial-gradient(1.5px 1.5px at 220px 80px, rgba(255,255,255,.9), transparent),
+        radial-gradient(1px 1px at 340px 200px, rgba(255,255,255,.7), transparent),
+        radial-gradient(2px 2px at 500px 120px, rgba(255,255,255,.7), transparent);
+      background-size: 600px 300px;
+      animation: drift 60s linear infinite;
+    }
+    .stars2 { opacity: .3; transform: scale(1.3); animation-duration: 90s; }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(300px); } }
+
+    .wrap {
+      width: min(1200px, calc(100% - 32px));
+      margin: 20px auto 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .panel {
+      background: linear-gradient(180deg, rgba(20,44,74,.96), rgba(11,24,42,.97));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    .title {
+      font-size: clamp(1.7rem, 3vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+      margin: 0 0 8px;
+      letter-spacing: -.02em;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      max-width: 65ch;
+    }
+    .badge-row, .stat-row, .mission-tags {
+      display: flex; flex-wrap: wrap; gap: 10px;
+    }
+    .badge, .tag, .smallpill {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: .92rem;
+      background: rgba(125,211,252,.12);
+      border: 1px solid rgba(125,211,252,.22);
+      color: #dff7ff;
+    }
+    .smallpill { font-size: .82rem; padding: 6px 10px; }
+    .accent { color: var(--accent); }
+    .warning { color: var(--accent2); }
+    .scorebox {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 12px;
+      margin-top: 6px;
+    }
+    .scorecard {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+    }
+    .scorecard .big { font-size: 1.8rem; font-weight: 800; margin-top: 3px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .sidebar { position: sticky; top: 18px; }
+    .progress-line {
+      height: 10px;
+      background: rgba(255,255,255,.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 12px 0 16px;
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #fbbf24);
+      transition: width .3s ease;
+    }
+    .mission-list { display: grid; gap: 10px; }
+    .mission-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .mission-item:hover { transform: translateY(-1px); }
+    .mission-item.active {
+      border-color: rgba(125,211,252,.45);
+      background: rgba(125,211,252,.12);
+    }
+    .mission-item.done { border-color: rgba(134,239,172,.4); }
+    .mission-item h4 { margin: 0 0 4px; font-size: 1rem; }
+    .mission-item p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .mission-card { display: none; }
+    .mission-card.active { display: block; }
+    .mission-card h2 { margin-top: 0; margin-bottom: 6px; font-size: 1.55rem; }
+    .mission-card p { color: var(--muted); line-height: 1.55; }
+    .callout {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border-left: 4px solid var(--accent2);
+      color: #fdf4d6;
+    }
+    .grid2, .grid3 {
+      display: grid; gap: 14px; margin-top: 14px;
+    }
+    .grid2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input, select, button, textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(5,10,20,.6);
+      color: var(--text);
+      padding: 11px 12px;
+      font: inherit;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #1b5d91, #123d64);
+      border-color: rgba(125,211,252,.25);
+      font-weight: 700;
+      transition: transform .12s ease, filter .12s ease;
+    }
+    button:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .btn-row button { width: auto; min-width: 140px; }
+    .secondary { background: linear-gradient(180deg, #4a5164, #2f3647); }
+    .success { background: linear-gradient(180deg, #1f7a4f, #145a38); }
+    .hint {
+      display: none; margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+      background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.25); color: #fde68a;
+    }
+    .result {
+      margin-top: 12px; padding: 12px 14px; border-radius: 12px; display: none;
+    }
+    .good { display:block; background: rgba(34,197,94,.15); border:1px solid rgba(134,239,172,.3); color:#d1fae5; }
+    .bad { display:block; background: rgba(239,68,68,.14); border:1px solid rgba(252,165,165,.28); color:#fee2e2; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .tableish { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .tableish td, .tableish th {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 8px 6px; text-align: left;
+    }
+    .final-code {
+      font-size: 2rem; text-align: center; letter-spacing: .22em; font-weight: 900;
+      color: #fef3c7; padding: 12px; border-radius: 16px;
+      background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.25);
+    }
+    .mini {
+      font-size: .9rem; color: var(--muted);
+    }
+    @media (max-width: 920px) {
+      .hero, .layout, .grid2, .grid3 { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="wrap">
+    <section class="hero">
+      <div class="panel">
+        <div class="badge-row">
+          <span class="badge">Grades 10–12</span>
+          <span class="badge">45-minute activity</span>
+          <span class="badge">Minimal facilitator prep</span>
+        </div>
+        <h1 class="title">Mission Control: <span class="accent">Aerospace Systems Challenge</span></h1>
+        <p class="subtitle">
+          Students act as a flight team preparing a lunar mission. They must pass four short mission stations:
+          choose a vehicle, plan an orbit, survive reentry, and decode a communication problem. Every section is self-guided,
+          auto-checked, and built to feel more like a challenge than a worksheet.
+        </p>
+        <div class="mission-tags">
+          <span class="tag">fuel tradeoffs</span>
+          <span class="tag">orbital thinking</span>
+          <span class="tag">entry angle</span>
+          <span class="tag">mission logic</span>
+          <span class="tag">final launch code</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="scorebox">
+          <div class="scorecard">
+            <div class="mini">Mission progress</div>
+            <div id="missionCount" class="big">0 / 4</div>
+          </div>
+          <div class="scorecard">
+            <div class="mini">Flight score</div>
+            <div id="score" class="big">0</div>
+          </div>
+          <div class="scorecard">
+            <div class="mini">Elapsed time</div>
+            <div id="timer" class="big">00:00</div>
+          </div>
+          <div class="scorecard">
+            <div class="mini">Difficulty</div>
+            <div class="big">Medium</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="sidebar panel">
+        <h3 style="margin-top:0">How it works</h3>
+        <p class="mini">Students can complete this in order with almost no facilitator explanation.</p>
+        <div class="progress-line"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="mission-list" id="missionList"></div>
+        <div class="callout">
+          <strong>Facilitator note:</strong> open the page and tell students to complete all four stations and unlock the launch code.
+          That is basically it.
+        </div>
+        <div class="mini">Tip: this file works offline as a single HTML page.</div>
+      </aside>
+
+      <main>
+        <section class="panel mission-card active" data-index="0">
+          <h2>1. Pick the launch vehicle</h2>
+          <p>Your spacecraft must carry scientific equipment to lunar orbit. Bigger rockets carry more mass, but cost more fuel. Choose the best vehicle for the mission goals below.</p>
+          <div class="callout">
+            Goal: carry <strong>at least 21 tons</strong> to translunar injection while keeping the budget as low as possible.
+          </div>
+          <table class="tableish">
+            <tr><th>Vehicle</th><th>Payload to TLI</th><th>Mission cost</th><th>Reliability</th></tr>
+            <tr><td>Atlas-X</td><td>16 tons</td><td>48 credits</td><td>98%</td></tr>
+            <tr><td>Vulcan-R</td><td>22 tons</td><td>61 credits</td><td>95%</td></tr>
+            <tr><td>Ares-H</td><td>29 tons</td><td>82 credits</td><td>96%</td></tr>
+            <tr><td>Comet-L</td><td>21 tons</td><td>58 credits</td><td>91%</td></tr>
+          </table>
+          <div class="grid2">
+            <div class="card">
+              <label for="rocketChoice">Choose your rocket</label>
+              <select id="rocketChoice">
+                <option value="">Select one</option>
+                <option value="Atlas-X">Atlas-X</option>
+                <option value="Vulcan-R">Vulcan-R</option>
+                <option value="Ares-H">Ares-H</option>
+                <option value="Comet-L">Comet-L</option>
+              </select>
+              <div class="btn-row">
+                <button onclick="checkRocket()">Submit decision</button>
+                <button class="secondary" onclick="showHint('hint1')">Show hint</button>
+              </div>
+              <div class="hint" id="hint1">Eliminate any rocket that cannot carry 21 tons. Then compare the cost of the remaining options.</div>
+              <div class="result" id="result1"></div>
+            </div>
+            <div class="card">
+              <strong>What students practice</strong>
+              <p class="mini">Constraint-based engineering thinking: meet the minimum requirement, then optimize under a tradeoff.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel mission-card" data-index="1">
+          <h2>2. Plan the orbit window</h2>
+          <p>Your spacecraft needs the correct circular orbit around the Moon. Use the orbital speed clue chart to pick the best altitude.</p>
+          <div class="grid2">
+            <div class="card">
+              <strong>Orbit options</strong>
+              <table class="tableish">
+                <tr><th>Altitude</th><th>Orbital speed</th><th>Coverage quality</th></tr>
+                <tr><td>50 km</td><td>1.63 km/s</td><td>high risk from terrain</td></tr>
+                <tr><td>100 km</td><td>1.60 km/s</td><td>balanced</td></tr>
+                <tr><td>200 km</td><td>1.56 km/s</td><td>weaker imaging detail</td></tr>
+                <tr><td>500 km</td><td>1.45 km/s</td><td>poor for mapping</td></tr>
+              </table>
+              <p class="mini">Mission scientists want the most stable option that still gives <strong>good imaging detail</strong> and avoids terrain risk.</p>
+            </div>
+            <div class="card">
+              <label for="orbitChoice">Best orbit altitude</label>
+              <select id="orbitChoice">
+                <option value="">Select one</option>
+                <option value="50">50 km</option>
+                <option value="100">100 km</option>
+                <option value="200">200 km</option>
+                <option value="500">500 km</option>
+              </select>
+              <div class="btn-row">
+                <button onclick="checkOrbit()">Lock orbit</button>
+                <button class="secondary" onclick="showHint('hint2')">Show hint</button>
+              </div>
+              <div class="hint" id="hint2">50 km gives detail but is too risky. 500 km is safe but too far. Pick the balanced option.</div>
+              <div class="result" id="result2"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel mission-card" data-index="2">
+          <h2>3. Survive reentry</h2>
+          <p>A return capsule is approaching Earth. The reentry angle matters: too steep and it burns up, too shallow and it skips back into space.</p>
+          <div class="callout">
+            Safe entry corridor: <strong>between 5.5° and 7.2° below horizontal</strong>
+          </div>
+          <div class="grid3">
+            <div class="card"><strong>4.9°</strong><br><span class="mini">very shallow</span></div>
+            <div class="card"><strong>6.3°</strong><br><span class="mini">moderate</span></div>
+            <div class="card"><strong>8.0°</strong><br><span class="mini">steep</span></div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <label for="entryChoice">Choose the safest entry angle</label>
+              <select id="entryChoice">
+                <option value="">Select one</option>
+                <option value="4.9">4.9°</option>
+                <option value="6.3">6.3°</option>
+                <option value="8.0">8.0°</option>
+              </select>
+              <div class="btn-row">
+                <button onclick="checkEntry()">Confirm angle</button>
+                <button class="secondary" onclick="showHint('hint3')">Show hint</button>
+              </div>
+              <div class="hint" id="hint3">Only one value sits inside the safe corridor.</div>
+              <div class="result" id="result3"></div>
+            </div>
+            <div class="card">
+              <strong>Fast science connection</strong>
+              <p class="mini">Apollo missions had to hit a narrow entry corridor too. Real spacecraft design often depends on staying inside these kinds of limits.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel mission-card" data-index="3">
+          <h2>4. Decode the communication failure</h2>
+          <p>Mission Control received a corrupted status message. Use the clues to determine the missing 4-digit launch code.</p>
+          <div class="grid2">
+            <div class="card">
+              <strong>Clues</strong>
+              <ol class="mini" style="line-height:1.65; padding-left: 18px;">
+                <li>The code uses four different digits.</li>
+                <li>The first digit is the number of main forces on an aircraft in level flight.</li>
+                <li>The second digit is one more than the first.</li>
+                <li>The third digit is the number of stages in a simple water rocket: fill, pressurize, launch, coast.</li>
+                <li>The last digit is the number of digits in the binary number <span class="mono">101</span>.</li>
+              </ol>
+            </div>
+            <div class="card">
+              <label for="codeInput">Enter the 4-digit code</label>
+              <input id="codeInput" maxlength="4" inputmode="numeric" placeholder="####" />
+              <div class="btn-row">
+                <button onclick="checkCode()">Decode message</button>
+                <button class="secondary" onclick="showHint('hint4')">Show hint</button>
+              </div>
+              <div class="hint" id="hint4">In level flight, planes balance lift, weight, thrust, and drag.</div>
+              <div class="result" id="result4"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel mission-card" data-index="4">
+          <h2>Launch unlocked</h2>
+          <p>You completed the flight review. The mission can now launch.</p>
+          <div class="final-code" id="finalCode">MC-0000</div>
+          <div class="grid2">
+            <div class="card">
+              <strong>Debrief prompt</strong>
+              <p class="mini">Which station felt most like real engineering: optimizing rocket choice, choosing a stable orbit, staying within a reentry safety corridor, or decoding a system problem?</p>
+            </div>
+            <div class="card">
+              <strong>Extension ideas</strong>
+              <p class="mini">Students can replay and try for a faster time, explain their choices to a partner, or open the HTML file and modify the mission text, scoring, or colors.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const missionMeta = [
+      { title: 'Launch vehicle', desc: 'tradeoff decision' },
+      { title: 'Orbit window', desc: 'pick the best altitude' },
+      { title: 'Reentry', desc: 'stay inside the safe corridor' },
+      { title: 'Comms failure', desc: 'decode the launch code' }
+    ];
+
+    const state = {
+      score: 0,
+      completed: [false, false, false, false],
+      start: Date.now()
+    };
+
+    function initMissionList() {
+      const list = document.getElementById('missionList');
+      list.innerHTML = '';
+      missionMeta.forEach((m, i) => {
+        const item = document.createElement('div');
+        item.className = 'mission-item' + (i === 0 ? ' active' : '');
+        item.id = `missionItem${i}`;
+        item.onclick = () => showMission(i);
+        item.innerHTML = `<h4>${i+1}. ${m.title}</h4><p>${m.desc}</p>`;
+        list.appendChild(item);
+      });
+    }
+
+    function showMission(i) {
+      document.querySelectorAll('.mission-card').forEach(card => card.classList.remove('active'));
+      document.querySelectorAll('.mission-item').forEach(item => item.classList.remove('active'));
+      const card = document.querySelector(`.mission-card[data-index="${i}"]`);
+      if (card) card.classList.add('active');
+      const item = document.getElementById(`missionItem${i}`);
+      if (item) item.classList.add('active');
+    }
+
+    function updateScore() {
+      const done = state.completed.filter(Boolean).length;
+      document.getElementById('score').textContent = state.score;
+      document.getElementById('missionCount').textContent = `${done} / 4`;
+      document.getElementById('progressFill').style.width = `${done * 25}%`;
+      state.completed.forEach((val, i) => {
+        const item = document.getElementById(`missionItem${i}`);
+        if (!item) return;
+        item.classList.toggle('done', val);
+      });
+      if (done === 4) {
+        document.getElementById('finalCode').textContent = `MC-${String(state.score).padStart(4, '0')}`;
+        showMission(4);
+      }
+    }
+
+    function awardOnce(index, points) {
+      if (!state.completed[index]) {
+        state.completed[index] = true;
+        state.score += points;
+        updateScore();
+      }
+    }
+
+    function setResult(id, ok, text) {
+      const el = document.getElementById(id);
+      el.className = 'result ' + (ok ? 'good' : 'bad');
+      el.textContent = text;
+    }
+
+    function showHint(id) {
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function checkRocket() {
+      const val = document.getElementById('rocketChoice').value;
+      if (val === 'Comet-L') {
+        setResult('result1', true, 'Correct. Comet-L is the lowest-cost rocket that still meets the 21-ton requirement.');
+        awardOnce(0, 250);
+      } else if (!val) {
+        setResult('result1', false, 'Pick a rocket first.');
+      } else {
+        setResult('result1', false, 'Not the best choice. Either it cannot carry enough mass or it costs more than necessary.');
+      }
+    }
+
+    function checkOrbit() {
+      const val = document.getElementById('orbitChoice').value;
+      if (val === '100') {
+        setResult('result2', true, 'Correct. 100 km is the balanced choice: good imaging detail without the terrain risk of 50 km.');
+        awardOnce(1, 250);
+      } else if (!val) {
+        setResult('result2', false, 'Choose an orbit altitude first.');
+      } else {
+        setResult('result2', false, 'Try again. This option is either too risky or too poor for imaging.');
+      }
+    }
+
+    function checkEntry() {
+      const val = document.getElementById('entryChoice').value;
+      if (val === '6.3') {
+        setResult('result3', true, 'Correct. 6.3° is inside the safe reentry corridor.');
+        awardOnce(2, 250);
+      } else if (!val) {
+        setResult('result3', false, 'Choose an angle first.');
+      } else {
+        setResult('result3', false, 'That angle falls outside the safe corridor.');
+      }
+    }
+
+    function checkCode() {
+      const val = document.getElementById('codeInput').value.trim();
+      if (val === '4543') {
+        setResult('result4', true, 'Correct. Four forces on an aircraft, then 5, then 4 stages, then 3 binary digits.');
+        awardOnce(3, 250);
+      } else {
+        setResult('result4', false, 'That code does not fit all the clues.');
+      }
+    }
+
+    function tick() {
+      const sec = Math.floor((Date.now() - state.start) / 1000);
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      document.getElementById('timer').textContent = `${m}:${s}`;
+    }
+
+    initMissionList();
+    updateScore();
+    setInterval(tick, 1000);
+    tick();
+  </script>
+</body>
+</html>
