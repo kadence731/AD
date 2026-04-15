@@ -8,9 +8,9 @@ bodyName = 'Earth';        % Planet / Central body
 speedMult = 1.00;          % Speed Multiplier
 startAltitude_km = 300;    % Starting Altitude
 
-dt = 8;                    % Time Step
+dt = 20;                   % Time Step
 trailWidth = 2.2;          % Orbit Trail Thickness
-pauseTime = 0.003;         % Animation Speed
+pauseTime = 0;             % Animation Speed - adjust to 0.003 to slow animation
 
 
 
